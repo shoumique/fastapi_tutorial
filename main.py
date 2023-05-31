@@ -2,6 +2,10 @@ from typing import Optional
 from fastapi import FastAPI, Response, status, HTTPException
 from pydantic import BaseModel
 
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
+import time
 
 app = FastAPI()
 
@@ -12,6 +16,28 @@ class Post(BaseModel):
     published: bool = True
     rating: Optional[int] = None
 
+while True:
+    try:
+        conn = psycopg2.connect(
+            host="localhost",
+            database="tutorial_fastapi",
+            user="postgres",
+            password="odoo",
+            cursor_factory=RealDictCursor
+        )
+        
+        cursor = conn.cursor()
+
+        print("Database connected!")
+
+        break
+
+    except Exception as error:
+        print("Connecting to database failed!")
+        print("Error: ", error)
+
+        time.sleep(3)
+
 
 @app.get("/")
 def root():
@@ -19,30 +45,67 @@ def root():
 
 @app.get("/posts")
 def get_posts():
-    return {"data": "This is your posts"}
+
+    cursor.execute("""
+        SELECT *
+        FROM posts
+    """)
+
+    posts = cursor.fetchall()
+
+    return {"data": posts}
+
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_posts(post: Post):
-    return {"data"}
+
+    cursor.execute("""
+        INSERT INTO posts (title, content, is_published) VALUES (%s, %s, %s) RETURNING * 
+    """, (post.title, post.content, post.published))
+
+    new_post = cursor.fetchone()
+
+    conn.commit()
+
+    return {"data": new_post}
 
 # This need to come first before /posts/{id} because fastapi matches the first similar occurance
-@app.get("/posts/latest")
-def get_latest_post():
-    return {"detail": "this is the latest post"}
+# @app.get("/posts/latest")
+# def get_latest_post():
+#     return {"detail": "this is the latest post"}
 
 @app.get("/posts/{id}")
 def get_post(id: int):
+    
+    cursor.execute("""
+        SELECT *
+        FROM posts
+        WHERE id = %s
+    """, (str(id),))
+
+    post = cursor.fetchone()
+
     if not post:
         # response.status_code = status.HTTP_404_NOT_FOUND
         # return {'message': f"post with id: {id} was not found"}
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"post with id: {id} was not found")
-    return {"post_detail": f"Here is post with id: {id}"}
+    
+    return {"post_detail": f"Here is post with id: {id}, {post}"}
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
-    if not post:
+    cursor.execute("""
+        DELETE FROM posts
+        WHERE id=%s RETURNING *
+    """, (str(id),))
+
+    deleted_post = cursor.fetchone()
+
+    conn.commit()
+
+    if deleted_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"post with id: {id} does not exist")
 
@@ -51,8 +114,20 @@ def delete_post(id: int):
 
 @app.put("/posts/{id}")
 def update_post(id: int, post: Post):
-    if not post:
+
+    cursor.execute("""
+        UPDATE posts
+        SET title = %s, content = %s, is_published = %s 
+        WHERE id = %s 
+        RETURNING *
+    """, (post.title, post.content, post.published, str(id)))
+
+    updated_post = cursor.fetchone()
+
+    conn.commit()
+
+    if updated_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"post with id: {id} does not exist")
     
-    return {"message": f"Post with id: {id} is updated"}
+    return {"data": updated_post}
