@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
 # This part handles User Data sending to us
@@ -14,6 +14,21 @@ class PostCreate(PostBase):
 
 # This part handles Our Data sends back to user
 class Post(PostBase):
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+# USER FUNCTIONALITIES
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+
+# Response for UserCreate Model
+class UserOut(BaseModel):
+    id: int
+    email: EmailStr
     created_at: datetime
 
     class Config:
