@@ -37,3 +37,8 @@ class UserOut(BaseModel):
 
 class UserGet(UserOut):
     pass
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
