@@ -30,5 +30,3 @@ class Post(Base):
 
     owner = relationship("User")
 
-
-Base.metadata.create_all(bind=engine)
