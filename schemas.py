@@ -4,11 +4,9 @@ from datetime import datetime
 
 # This part handles User Data sending to us
 class PostBase(BaseModel):
-    id: int
     title: str
     content: str
     published: bool = True
-    owner_id: int
 
 
 class PostCreate(PostBase):

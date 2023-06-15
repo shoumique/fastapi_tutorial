@@ -44,7 +44,7 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), curren
 
     # But this is not a good approach because, if we have 50 fields we need to do this for 50 fields)
     # So better approach is to use pydantic model to convert to dict and then unpacking the dict
-    new_post = models.Post(**post.dict())
+    new_post = models.Post(owner_id = current_user.id, **post.dict())
 
     db.add(new_post)
     db.commit()
