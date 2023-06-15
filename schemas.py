@@ -15,6 +15,7 @@ class PostCreate(PostBase):
 
 # This part handles Our Data sends back to user
 class Post(PostBase):
+    id: int
     created_at: datetime
     owner_id: int
 

@@ -94,15 +94,21 @@ def delete_post(id: int, db: Session = Depends(get_db), current_user: int = Depe
     # conn.commit()
 
     # This is only just query
-    post = db.query(models.Post).filter(models.Post.id == id)
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+
+    post = post_query.first()
 
     # for executing the query we need to add all() or first()
 
-    if post.first() == None:
+    if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"post with id: {id} does not exist")
     
-    post.delete(synchronize_session=False)
+    elif post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, 
+                            detail=f"You are not authorized to perform the requested action")
+    
+    post_query.delete(synchronize_session=False)
     db.commit()
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -129,6 +135,10 @@ def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends
     if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"post with id: {id} does not exist")
+    
+    elif post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, 
+                            detail=f"You are not authorized to perform the requested action")
     
     # post_query.update({
     #     'title': 'updated title',
