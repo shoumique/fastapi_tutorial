@@ -12,12 +12,21 @@ class PostBase(BaseModel):
 class PostCreate(PostBase):
     pass
 
+# Response for UserCreate Model
+class UserOut(BaseModel):
+    id: int
+    email: EmailStr
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
 
 # This part handles Our Data sends back to user
 class Post(PostBase):
     id: int
     created_at: datetime
     owner_id: int
+    owner: UserOut
 
     class Config:
         orm_mode = True
@@ -28,14 +37,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
-# Response for UserCreate Model
-class UserOut(BaseModel):
-    id: int
-    email: EmailStr
-    created_at: datetime
 
-    class Config:
-        orm_mode = True
 
 
 class UserGet(UserOut):
