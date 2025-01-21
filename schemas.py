@@ -10,7 +10,7 @@ class PostBase(BaseModel):
 
 
 class PostCreate(PostBase):
-    pass
+    is_ai_generated: Optional[bool] = False
 
 # Response for UserCreate Model
 class UserOut(BaseModel):
@@ -27,6 +27,7 @@ class Post(PostBase):
     created_at: datetime
     owner_id: int
     owner: UserOut
+    is_ai_generated: bool
 
     class Config:
         orm_mode = True
